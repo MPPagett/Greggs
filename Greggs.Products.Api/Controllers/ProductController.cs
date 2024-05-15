@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Greggs.Products.Api.Models;
+using Greggs.Products.Api.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 namespace Greggs.Products.Api.Controllers;
 
@@ -11,30 +10,19 @@ namespace Greggs.Products.Api.Controllers;
 [Route("[controller]")]
 public class ProductController : ControllerBase
 {
-    private static readonly string[] Products = new[]
-    {
-        "Sausage Roll", "Vegan Sausage Roll", "Steak Bake", "Yum Yum", "Pink Jammie"
-    };
+    private IProductService _productService;
 
-    private readonly ILogger<ProductController> _logger;
-
-    public ProductController(ILogger<ProductController> logger)
+    public ProductController(IProductService productService)
     {
-        _logger = logger;
+        _productService = productService;
     }
 
+    // I don't want to reconfigure the endpoint too much as it is not within the spec,
+    // but if I were to create this from scratch I would add the paging data to the
+    // request headers to keep the URL clean while still being able to pass the paging data
     [HttpGet]
-    public IEnumerable<Product> Get(int pageStart = 0, int pageSize = 5)
+    public async Task<IEnumerable<Product>> Get(int pageStart = 0, int pageSize = 5, string currencyCode = Constants.Currency.GreatBritishPound)
     {
-        if (pageSize > Products.Length)
-            pageSize = Products.Length;
-
-        var rng = new Random();
-        return Enumerable.Range(1, pageSize).Select(index => new Product
-            {
-                PriceInPounds = rng.Next(0, 10),
-                Name = Products[rng.Next(Products.Length)]
-            })
-            .ToArray();
+        return await _productService.Get(pageStart, pageSize, currencyCode);
     }
 }
